@@ -74,6 +74,9 @@ class Vector2(
     }
 
     companion object CREATOR : Parcelable.Creator<Vector2> {
+
+        const val SIZE_BYTES = (Float.SIZE_BYTES * 2)
+
         override fun createFromParcel(parcel: Parcel): Vector2 {
             return Vector2(parcel)
         }

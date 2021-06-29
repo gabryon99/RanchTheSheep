@@ -22,14 +22,4 @@ interface GameStateMachine {
      */
     @WorkerThread fun render(canvas: Canvas) = Unit
 
-    /***
-     * Read incoming network message.
-     */
-    @WorkerThread fun readNetworkMessage(message: NetworkMessage) = Unit
-
-    /***
-     * Return a message to send through the network.
-     */
-    @WorkerThread fun sendNetworkMessage(): NetworkMessage? = null
-
 }

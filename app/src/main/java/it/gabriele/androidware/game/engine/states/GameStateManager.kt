@@ -2,13 +2,15 @@ package it.gabriele.androidware.game.engine.states
 
 import android.os.Bundle
 import android.util.Log
+import androidx.core.os.bundleOf
 import java.lang.RuntimeException
 
 class GameStateManager {
 
     companion object {
         private const val TAG = "GameStateManager"
-        const val KEY_CURRENT_GAME_STATE = "__CURRENT_GAME_STATE"
+        const val KEY_CURRENT_GAME_STATE = "GameStateManager.CURRENT_GAME_STATE"
+        const val KEY_RESTART = "GameStateManager.KEY_RESTART"
     }
 
     var currentKeyState = 0
@@ -17,46 +19,54 @@ class GameStateManager {
 
     private var states: Map<Int, GameState>? = null
 
-    /* Initialize the states map and start the 0th state. */
-    fun init(s: Map<Int, GameState>, bundleState: Bundle?) {
+    fun loadStates(states: Map<Int, GameState>) {
+        this.states = states
+    }
 
-        /* Did the states list have been initialized it? */
+    fun start(bundleState: Bundle?) {
+
         if (states == null) {
-
-            /* Save the states map */
-            states = s
-
-            var startState = 0
-            if (bundleState != null) {
-                startState = bundleState.getInt(KEY_CURRENT_GAME_STATE, startState)
-            }
-
-            /* Check if the starting state is valid. */
-            if (s[startState] == null) {
-                throw RuntimeException("State '$startState' not found.")
-            }
-
-            /* Prepare current state */
-            currentKeyState = startState
-            currentState = s[startState]
-
-            /* Pass the state bundle in order to recover the previous game state. */
-            currentState?.onStateStart(bundleState)
-
-            Log.i(TAG, "init: GameStateManager initialized it!")
+            throw RuntimeException("The states haven't been initialized it!")
         }
-        else {
-            throw RuntimeException("The GameStateManager has been already initialized it.")
 
+        var startState = 0
+        if (bundleState != null) {
+            startState = bundleState.getInt(KEY_CURRENT_GAME_STATE, startState)
         }
+
+        /* Check if the starting state is valid. */
+        if (states!![startState] == null) {
+            throw RuntimeException("State '$startState' not found.")
+        }
+
+        Log.i(TAG, "start: started!")
+
+        /* Prepare current state */
+        currentKeyState = startState
+        currentState = states!![startState]
+
+        /* Pass the state bundle in order to recover the previous game state. */
+        currentState?.onStateStart(bundleState)
     }
 
     fun saveGameState(bundle: Bundle) {
         currentState?.onStateSave(bundle)
     }
 
+    fun restart(initialState: Int) {
+
+        if (states == null) {
+            throw RuntimeException("The GameStateManager hasn't been initialized it.")
+        }
+
+        currentKeyState = initialState
+        currentState = states!![initialState]
+
+        currentState?.onStateStart(bundleOf(KEY_RESTART to true))
+    }
+
     /* Switch the game in a new state.*/
-    fun switch(newState: Int) {
+    fun switch(newState: Int, args: Bundle? = null, oldState: Bundle? = null) {
 
         if (states == null) {
             throw RuntimeException("The GameStateManager hasn't been initialized it.")
@@ -66,12 +76,14 @@ class GameStateManager {
 
         if (nextState != null) {
 
+            Log.d(TAG, "switch: switching to ($newState, ${nextState.javaClass.name}) state... (${Thread.currentThread().name})")
+            
             currentState?.onStateEnd()
 
             currentKeyState = newState
             currentState = nextState
 
-            currentState?.onStateStart()
+            currentState?.onStateStart(oldState, args)
         }
         else {
             throw RuntimeException("State '$newState' not found.")
