@@ -1,4 +1,4 @@
-## Catch-The-Sheep
+## Catch The Sheep
 
 Catch The Sheep is an Android game application developed for the 'Sviluppo di Applicazioni Mobile' course. 
 
